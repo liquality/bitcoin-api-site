@@ -7,7 +7,7 @@
         <b-collapse id="nav-collapse" is-nav>
           <b-navbar-nav class="mr-auto">
             <b-nav-item href="/apps">Apps</b-nav-item>
-            <b-nav-item target="_blank" href="https://liquality.io/documentation">Docs</b-nav-item>
+            <b-nav-item target="_blank" href="https://liquality.io/documentation/web_extension/bitcoin/getting_started/">Docs</b-nav-item>
             <b-nav-item target="_blank" href="https://chrome.google.com/webstore/detail/liquality-wallet/kpfopkelmapcoipemfendmdcghnegimn">Wallet</b-nav-item>
             <b-nav-item target="_blank" href="https://liquality.io">Liquality</b-nav-item>
           </b-navbar-nav>
