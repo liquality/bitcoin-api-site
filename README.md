@@ -1,4 +1,12 @@
-# Bitcoin API
+# Bitcoin API Site
+
+Bitcoin API application examples
+
+- [Payment Request](https://bitcoin.liquality.io/apps/payment)
+- [Timelock](https://bitcoin.liquality.io/apps/timelock)
+- [Proof of Funds](https://bitcoin.liquality.io/apps/proof-of-funds)
+- [Multisig](https://bitcoin.liquality.io/apps/multisig)
+
 
 ## Build Setup
 
@@ -16,5 +24,3 @@ $ npm run start
 # generate static project
 $ npm run generate
 ```
-
-For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
