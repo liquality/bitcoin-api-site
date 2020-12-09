@@ -1,0 +1,49 @@
+{
+  "name": "bitcoin-api-site",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate",
+    "lint:js": "eslint --ext .js,.vue --ignore-path .gitignore .",
+    "lint": "npm run lint:js"
+  },
+  "dependencies": {
+    "@download/blockies": "^1.0.3",
+    "@nuxtjs/axios": "^5.12.2",
+    "axios": "^0.20.0",
+    "bignumber.js": "^9.0.1",
+    "bitcoin-address-validation": "^1.0.2",
+    "bitcoinjs-lib": "^5.2.0",
+    "bitcoinjs-message": "^2.1.3",
+    "bootstrap-vue": "^2.18.0",
+    "bs58": "^4.0.1",
+    "core-js": "^3.6.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "highlight.js": "^10.4.1",
+    "lodash": "^4.17.20",
+    "memoizee": "^0.4.14",
+    "mongoose": "^5.10.11",
+    "nanoid": "^2.1.11",
+    "nuxt": "^2.14.5",
+    "qrcode": "^1.4.4",
+    "query-string": "^6.13.7",
+    "vue-highlightjs": "^1.3.3"
+  },
+  "devDependencies": {
+    "@nuxtjs/eslint-config": "^3.1.0",
+    "@nuxtjs/eslint-module": "^2.0.0",
+    "@nuxtjs/google-analytics": "^2.4.0",
+    "@nuxtjs/style-resources": "^1.0.0",
+    "@nuxtjs/svg": "^0.1.12",
+    "@vue/eslint-config-standard": "^5.1.2",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.8.1",
+    "eslint-plugin-nuxt": "^1.0.0",
+    "node-sass": "^4.14.1",
+    "sass-loader": "^10.0.3"
+  }
+}

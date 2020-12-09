@@ -1,0 +1,22 @@
+// Custom Bootstrap variable overrides go first
+$grid-breakpoints: (
+  xs: 0,
+  sm: 480px,
+  md: 640px,
+  lg: 970px
+);
+
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 970px
+);
+
+$primary:#9c55f6;
+
+// Then include the following
+@import 'bootstrap/scss/bootstrap.scss';
+@import 'bootstrap-vue/src/index.scss';
+
+// And define any of your custom or additional CSS/SCSS here,
+// or via an @import
