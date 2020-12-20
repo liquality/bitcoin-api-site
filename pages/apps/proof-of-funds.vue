@@ -1,5 +1,6 @@
 <template>
   <div class="proof-of-funds">
+    <h1 class="mb-4">Proof of Funds <small class="text-muted">(testnet only)</small></h1>
     <form @submit.prevent="sign">
       <div class="form-group">
         <label for="message">Message</label>

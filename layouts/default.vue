@@ -2,11 +2,11 @@
   <div>
     <header class="container">
       <b-navbar toggleable="md" type="primary">
-        <a class="navbar-brand mr-4" href="/"><Logo class="logo" /></a>
+        <router-link to="/" class="navbar-brand mr-4"><Logo class="logo" /></router-link>
         <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
         <b-collapse id="nav-collapse" is-nav>
           <b-navbar-nav class="mr-auto">
-            <b-nav-item href="/apps">Apps</b-nav-item>
+            <b-nav-item to="/apps">Apps</b-nav-item>
             <b-nav-item target="_blank" href="https://liquality.io/documentation/web_extension/bitcoin/getting_started/">Docs</b-nav-item>
             <b-nav-item target="_blank" href="https://chrome.google.com/webstore/detail/liquality-wallet/kpfopkelmapcoipemfendmdcghnegimn">Wallet</b-nav-item>
             <b-nav-item target="_blank" href="https://liquality.io">Liquality</b-nav-item>

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="mb-4">Multisig</h1>
+    <h1 class="mb-4">Multisig <small class="text-muted">(testnet only)</small></h1>
     <div v-if="created">
       <div class="row">
         <div class="col">

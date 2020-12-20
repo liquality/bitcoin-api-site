@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="mb-4">Payment</h1>
+    <h1 class="mb-4">Payment <small class="text-muted">(testnet only)</small></h1>
     <div class="row">
       <div class="col">
         <div class="row mb-2">
