@@ -49,6 +49,17 @@
         </router-link>
       </div>
       <div class="col-lg-4 mb-4">
+        <router-link class="link-unstyled" to="/apps/write-on-chain">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <b-icon-pencil class="card-img-top mb-4" font-scale="5" variant="light" />
+            <h5 class="card-title">Write on chain</h5>
+            <p class="card-text">Write a permanent message on chain.</p>
+          </div>
+        </div>
+        </router-link>
+      </div>
+      <div class="col-lg-4 mb-4">
         <div class="card bg-secondary text-white">
           <div class="card-body">
             <b-icon-bezier2 class="card-img-top mb-4" font-scale="5" variant="light" />
