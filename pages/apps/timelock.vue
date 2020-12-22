@@ -86,7 +86,6 @@ export default {
       return true
     },
     timelockScript () {
-      console.log(this.claimAddress, this.timestamp)
       return scripts.timelock.output(this.claimAddress, this.timestamp)
     },
     timelockScriptPretty () {

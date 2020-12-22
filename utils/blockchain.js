@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-const BASE_URL = 'https://blockstream.info/testnet/api'
+const BASE_URL = 'https://liquality.io/testnet/electrs'
 
 async function getFees () {
   return { slow: 1, average: 2, fast: 3 }
@@ -12,6 +12,11 @@ async function getLatestBlock () {
   const blocks = result.data
   return blocks[0]
   // TODO: make sure median time is used
+}
+
+async function getTransaction (hash) {
+  const result = await axios.get(`${BASE_URL}/tx/${hash}`)
+  return result.data
 }
 
 async function getTransactions (address) {
@@ -35,4 +40,4 @@ async function sendRawTransaction (hex) {
   return result.data
 }
 
-export { getLatestBlock, getTransactions, getUtxos, getBalance, getFees, sendRawTransaction }
+export { getLatestBlock, getTransaction, getTransactions, getUtxos, getBalance, getFees, sendRawTransaction }

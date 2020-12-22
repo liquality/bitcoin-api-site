@@ -1,7 +1,9 @@
+import BigNumber from 'bignumber.js'
 import * as bjs from 'bitcoinjs-lib'
+import coinSelect from 'coinselect'
 import { getPubKeyHash, getByteCount, witnessStackToScriptWitness } from './bitcoin'
-import { getLatestBlock, getUtxos, getFees, sendRawTransaction } from './blockchain'
-import { tryGetAddresses } from './wallet'
+import { getLatestBlock, getTransaction, getUtxos, getFees, sendRawTransaction } from './blockchain'
+import { getAddresses, tryGetAddresses } from './wallet'
 
 const OPS = bjs.script.OPS
 
@@ -15,6 +17,70 @@ function decodeScript (script) {
   if (timelockScript) return { type: SCRIPT_TYPES.TIMELOCK, ...timelockScript }
   const multisigScript = multisig.decode(script)
   if (multisigScript) return { type: SCRIPT_TYPES.MULTISIG, ...multisigScript }
+}
+
+const multisend = {
+  async send (sendAddresses, amounts) {
+    const network = bjs.networks.testnet
+    const externalAddresses = await getAddresses(20, false)
+    const changeAddresses = await getAddresses(20, true)
+    const allAddresses = [...externalAddresses, ...changeAddresses].map(a => a.address)
+
+    const utxoPromises = allAddresses.map(address => getUtxos(address))
+    const utxosResult = await Promise.all(utxoPromises)
+    const utxos = utxosResult.reduce((all, curr) => {
+      return all.concat(curr)
+    }, [])
+
+    const targets = sendAddresses.map((addr, i) => ({
+      address: addr,
+      value: BigNumber(amounts[i]).times(1e8).toNumber(),
+      external: true
+    }))
+
+    const feeRate = (await getFees()).slow
+
+    const { inputs, outputs, fee } = coinSelect(utxos, targets, feeRate)
+
+    const changeOutputIndex = outputs.findIndex(output => !output.external)
+
+    if (changeOutputIndex >= 0) {
+      outputs[changeOutputIndex].address = changeAddresses[0].address // address reuse! naughty naughty! lol
+    }
+
+    const psbt = new bjs.Psbt({ network })
+    psbt.setVersion(2)
+
+    let inputAddress
+    for (const input of inputs) {
+      const inputTx = await getTransaction(input.txid)
+      const prevout = inputTx.vout[input.vout]
+      inputAddress = prevout.scriptpubkey_address
+      psbt.addInput({
+        hash: input.txid,
+        index: input.vout,
+        witnessUtxo: {
+          value: input.value,
+          script: Buffer.from(prevout.scriptpubkey, 'hex')
+        }
+      })
+    }
+
+    for (const output of outputs) {
+      psbt.addOutput({
+        address: output.address,
+        value: output.value
+      })
+    }
+
+    const psbtHex = psbt.toBase64()
+    const signedPSBTHex = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbtHex, 0, inputAddress] }) // TODO: all inputs CAL SUPPORT
+    const signedPSBT = bjs.Psbt.fromBase64(signedPSBTHex, { network })
+    signedPSBT.finalizeAllInputs()
+
+    const hex = signedPSBT.extractTransaction().toHex()
+    return sendRawTransaction(hex)
+  }
 }
 
 const multisig = {
@@ -144,7 +210,6 @@ const timelock = {
     return latestBlock.mediantime >= scriptDetails.timestamp // TODO: change to median time when available
   },
   async redeem (address, script, redeemAddress) {
-    console.log(address, script, redeemAddress)
     const scriptDetails = this.decode(script)
     const network = bjs.networks.testnet
     const utxos = await getUtxos(address)
@@ -200,6 +265,6 @@ const timelock = {
   }
 }
 
-const scripts = { timelock, multisig }
+const scripts = { timelock, multisig, multisend }
 
 export { scripts, SCRIPT_TYPES, decodeScript }

@@ -60,6 +60,19 @@
         </router-link>
       </div>
       <div class="col-lg-4 mb-4">
+        <router-link class="link-unstyled" to="/apps/multi-send">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <b-icon-box-arrow-right class="card-img-top mb-4" font-scale="5" variant="light" />
+            <h5 class="card-title">Multi Send</h5>
+            <p class="card-text">Send to multiple addresses in one transaction.</p>
+          </div>
+        </div>
+        </router-link>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-lg-4 mb-4">
         <div class="card bg-secondary text-white">
           <div class="card-body">
             <b-icon-bezier2 class="card-img-top mb-4" font-scale="5" variant="light" />
