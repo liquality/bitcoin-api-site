@@ -181,7 +181,7 @@ export default {
       await this.copy(window.location.href)
     },
     async refreshBalance () {
-      this.balance = await getBalance(this.timelockAddress)
+      this.balance = await getBalance(this.multisigAddress)
     },
     async create () {
       this.created = true
@@ -192,9 +192,9 @@ export default {
     async sign () {
       const psbt = this.psbt ? this.psbt : await scripts.multisig.createdRedeem(this.multisigAddress, this.multisigScriptPretty, this.redeemAddress)
       const scriptDetails = scripts.multisig.decode(this.multisigScriptPretty)
-      const addresses = await getAddresses(200)
+      const addresses = await getAddresses(0, 200)
       const signAddress = addresses.find(a => scriptDetails.publicKeys.includes(a.publicKey.toString('hex')))
-      const signedPsbt = await scripts.multisig.signRedeem(psbt, signAddress.address)
+      const signedPsbt = await scripts.multisig.signRedeem(psbt, signAddress.derivationPath)
       if (this.lastSig) {
         this.redeemTx = await scripts.multisig.sendRedeem(signedPsbt)
       }
@@ -206,7 +206,7 @@ export default {
       this.signatures = await scripts.multisig.getSignatures(this.psbt)
       this.redeemAddress = scripts.multisig.getRedeemAddress(this.psbt)
       if (process.client) {
-        const addresses = await tryGetAddresses(200)
+        const addresses = await tryGetAddresses(0, 200)
         this.signed = addresses.some(a => this.signatures.find(s => s.publicKey === a.publicKey.toString('hex')))
       }
     }

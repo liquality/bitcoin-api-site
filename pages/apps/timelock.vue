@@ -111,7 +111,7 @@ export default {
       this.$router.push({ query: { claimAddress: this.claimAddress, timestamp: this.timestamp } })
     },
     async redeem () {
-      const addresses = await getAddresses(200)
+      const addresses = await getAddresses(0, 200)
       const signAddress = addresses.find(a => a.address === this.claimAddress)
       this.redeemTx = await scripts.timelock.redeem(this.timelockAddress, this.timelockScriptPretty, signAddress)
     }

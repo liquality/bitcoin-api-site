@@ -6,6 +6,8 @@ Bitcoin API application examples
 - [Timelock](https://bitcoin.liquality.io/apps/timelock)
 - [Proof of Funds](https://bitcoin.liquality.io/apps/proof-of-funds)
 - [Multisig](https://bitcoin.liquality.io/apps/multisig)
+- [Multi Send](https://bitcoin.liquality.io/apps/multi-send)
+- [Write on Chain](https://bitcoin.liquality.io/apps/write-on-chain)
 
 
 ## Build Setup

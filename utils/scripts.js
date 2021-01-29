@@ -1,9 +1,8 @@
 import BigNumber from 'bignumber.js'
 import * as bjs from 'bitcoinjs-lib'
-import coinSelect from 'coinselect'
 import { getPubKeyHash, getByteCount, witnessStackToScriptWitness } from './bitcoin'
 import { getLatestBlock, getTransaction, getUtxos, getFees, sendRawTransaction } from './blockchain'
-import { getAddresses, tryGetAddresses } from './wallet'
+import { getInputs, getAddresses, tryGetAddresses } from './wallet'
 
 const OPS = bjs.script.OPS
 
@@ -22,15 +21,6 @@ function decodeScript (script) {
 const multisend = {
   async send (sendAddresses, amounts) {
     const network = bjs.networks.testnet
-    const externalAddresses = await getAddresses(20, false)
-    const changeAddresses = await getAddresses(20, true)
-    const allAddresses = [...externalAddresses, ...changeAddresses].map(a => a.address)
-
-    const utxoPromises = allAddresses.map(address => getUtxos(address))
-    const utxosResult = await Promise.all(utxoPromises)
-    const utxos = utxosResult.reduce((all, curr) => {
-      return all.concat(curr)
-    }, [])
 
     const targets = sendAddresses.map((addr, i) => ({
       address: addr,
@@ -38,24 +28,22 @@ const multisend = {
       external: true
     }))
 
-    const feeRate = (await getFees()).slow
-
-    const { inputs, outputs, fee } = coinSelect(utxos, targets, feeRate)
-
-    const changeOutputIndex = outputs.findIndex(output => !output.external)
-
-    if (changeOutputIndex >= 0) {
-      outputs[changeOutputIndex].address = changeAddresses[0].address // address reuse! naughty naughty! lol
-    }
+    const { inputs, outputs } = await getInputs(targets)
 
     const psbt = new bjs.Psbt({ network })
     psbt.setVersion(2)
 
-    let inputAddress
-    for (const input of inputs) {
+    const externalAddresses = await getAddresses(0, 500, false)
+    const changeAddresses = await getAddresses(0, 500, true)
+    const allAddresses = [...externalAddresses, ...changeAddresses]
+
+    const inputsToSign = []
+    for (const [index, input] of inputs.entries()) {
       const inputTx = await getTransaction(input.txid)
       const prevout = inputTx.vout[input.vout]
-      inputAddress = prevout.scriptpubkey_address
+      const inputAddress = prevout.scriptpubkey_address
+      const { derivationPath } = allAddresses.find(a => a.address === inputAddress)
+      inputsToSign.push({ index, derivationPath })
       psbt.addInput({
         hash: input.txid,
         index: input.vout,
@@ -73,9 +61,9 @@ const multisend = {
       })
     }
 
-    const psbtHex = psbt.toBase64()
-    const signedPSBTHex = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbtHex, 0, inputAddress] }) // TODO: all inputs CAL SUPPORT
-    const signedPSBT = bjs.Psbt.fromBase64(signedPSBTHex, { network })
+    const psbtBase64 = psbt.toBase64()
+    const signedPSBTBase64 = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbtBase64, inputsToSign] }) // TODO: all inputs CAL SUPPORT
+    const signedPSBT = bjs.Psbt.fromBase64(signedPSBTBase64, { network })
     signedPSBT.finalizeAllInputs()
 
     const hex = signedPSBT.extractTransaction().toHex()
@@ -108,7 +96,7 @@ const multisig = {
   async canRedeem (address, script) {
     const scriptDetails = this.decode(script)
     try {
-      const addresses = await tryGetAddresses(200, false)
+      const addresses = await tryGetAddresses(0, 200, false)
       const walletPublicKeys = addresses.map(a => a.publicKey.toString('hex'))
       const walletContains = scriptDetails.publicKeys.some(pk => walletPublicKeys.includes(pk))
       const utxos = await getUtxos(address)
@@ -121,57 +109,63 @@ const multisig = {
     const scriptDetails = this.decode(script)
     const network = bjs.networks.testnet
     const utxos = await getUtxos(address)
-    const utxo = utxos[0] // TODO: claim all
-    if (!utxo) throw new Error('Nothing to redeem')
+    if (!utxos.length) throw new Error('Nothing to redeem')
 
     const p2ms = bjs.payments.p2ms({ network, m: scriptDetails.requiredKeys, pubkeys: scriptDetails.publicKeys.map(k => Buffer.from(k, 'hex')) })
     const payment = bjs.payments.p2wsh({ redeem: p2ms, network }, { network })
 
     const psbt = new bjs.Psbt({ network })
     psbt.setVersion(2)
-    psbt.addInput({
-      hash: utxo.txid,
-      index: utxo.vout,
-      witnessUtxo: {
-        value: utxo.value,
-        script: payment.output
-      },
-      witnessScript: payment.redeem.output
-    })
 
-    const byteCount = getByteCount({ [`MULTISIG-P2WSH:${scriptDetails.requiredKeys}-${scriptDetails.totalKeys}`]: 1 }, { P2WPKH: 1 })
+    for (const utxo of utxos) {
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        witnessUtxo: {
+          value: utxo.value,
+          script: payment.output
+        },
+        witnessScript: payment.redeem.output
+      })
+    }
+
+    const byteCount = getByteCount({ [`MULTISIG-P2WSH:${scriptDetails.requiredKeys}-${scriptDetails.totalKeys}`]: utxos.length }, { P2WPKH: 1 })
     const feePerByte = (await getFees()).slow
     const fee = byteCount * feePerByte
+    const totalValue = utxos.reduce((total, utxo) => total + utxo.value, 0)
 
     psbt.addOutput({
       address: redeemAddress,
-      value: utxo.value - fee
+      value: totalValue - fee
     })
 
     return psbt.toBase64()
   },
-  async signRedeem (psbtHex, signAddress) {
-    await window.bitcoin.enable()
-    const signedPSBTHex = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbtHex, 0, signAddress] }) // TODO: all inputs CAL SUPPORT
-    return signedPSBTHex
-  },
-  async sendRedeem (psbtHex) {
+  async signRedeem (psbtBase64, derivationPath) {
     const network = bjs.networks.testnet
-    const signedPSBT = bjs.Psbt.fromBase64(psbtHex, { network })
+    await window.bitcoin.enable()
+    const psbt = bjs.Psbt.fromBase64(psbtBase64, { network })
+    const inputsToSign = psbt.txInputs.map((v, index) => ({ index, derivationPath }))
+    const signedPSBTBase64 = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbtBase64, inputsToSign] })
+    return signedPSBTBase64
+  },
+  async sendRedeem (psbtBase64) {
+    const network = bjs.networks.testnet
+    const signedPSBT = bjs.Psbt.fromBase64(psbtBase64, { network })
     signedPSBT.finalizeAllInputs()
     const hex = signedPSBT.extractTransaction().toHex()
     return await sendRawTransaction(hex)
   },
-  async getSignatures (psbtHex) {
+  async getSignatures (psbtBase64) {
     const network = bjs.networks.testnet
-    if (!psbtHex) return []
-    const psbt = bjs.Psbt.fromBase64(psbtHex, { network })
+    if (!psbtBase64) return []
+    const psbt = bjs.Psbt.fromBase64(psbtBase64, { network })
     return psbt.data.inputs[0].partialSig.map(psig => ({ publicKey: psig.pubkey.toString('hex'), signature: psig.signature.toString('hex') }))
   },
-  getRedeemAddress (psbtHex) {
+  getRedeemAddress (psbtBase64) {
     const network = bjs.networks.testnet
-    if (!psbtHex) return
-    const psbt = bjs.Psbt.fromBase64(psbtHex, { network })
+    if (!psbtBase64) return
+    const psbt = bjs.Psbt.fromBase64(psbtBase64, { network })
     return psbt.txOutputs[0].address
   }
 }
@@ -213,8 +207,7 @@ const timelock = {
     const scriptDetails = this.decode(script)
     const network = bjs.networks.testnet
     const utxos = await getUtxos(address)
-    const utxo = utxos[0] // TODO: claim all
-    if (!utxo) throw new Error('Nothing to redeem')
+    if (!utxos.length) throw new Error('Nothing to redeem')
 
     const timelockOutput = bjs.script.fromASM(script)
     const payment = bjs.payments.p2wsh({ redeem: { output: timelockOutput }, network }, { network })
@@ -222,46 +215,51 @@ const timelock = {
     const psbt = new bjs.Psbt({ network })
     psbt.setVersion(2)
     psbt.setLocktime(scriptDetails.timestamp)
-    psbt.addInput({
-      hash: utxo.txid,
-      index: utxo.vout,
-      witnessUtxo: {
-        value: utxo.value,
-        script: payment.output
-      },
-      sequence: 0,
-      witnessScript: payment.redeem.output
-    })
 
-    const byteCount = getByteCount({ 'TIMELOCK-P2WSH': 1 }, { P2WPKH: 1 })
-    const feePerByte = (await getFees()).slow
+    const inputsToSign = []
+    for (const [index, utxo] of utxos.entries()) {
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        witnessUtxo: {
+          value: utxo.value,
+          script: payment.output
+        },
+        sequence: 0,
+        witnessScript: payment.redeem.output
+      })
+      inputsToSign.push({ index, derivationPath: redeemAddress.derivationPath })
+    }
+
+    const byteCount = getByteCount({ 'TIMELOCK-P2WSH': utxos.length }, { P2WPKH: 1 })
+    const feePerByte = (await getFees()).average
     const fee = byteCount * feePerByte
+    const totalValue = utxos.reduce((total, utxo) => total + utxo.value, 0)
 
     psbt.addOutput({
       address: redeemAddress.address,
-      value: utxo.value - fee
+      value: totalValue - fee
     })
 
     await window.bitcoin.enable()
-    const signedPSBTHex = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbt.toBase64(), 0, redeemAddress.address] }) // TODO: all inputs CAL SUPPORT
-    const signedPSBT = bjs.Psbt.fromBase64(signedPSBTHex, { network })
+    const signedPSBTBase64 = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbt.toBase64(), inputsToSign] })
+    const signedPSBT = bjs.Psbt.fromBase64(signedPSBTBase64, { network })
 
-    const sig = signedPSBT.data.inputs[0].partialSig[0].signature
+    for (const [index, input] of signedPSBT.data.inputs.entries()) {
+      const sig = input.partialSig[0].signature
+      const timelockInput = bjs.script.compile([
+        sig,
+        Buffer.from(redeemAddress.publicKey, 'hex')
+      ])
+      const paymentWithInput = bjs.payments.p2wsh({ redeem: { output: timelockOutput, input: timelockInput, network }, network })
 
-    const timelockInput = bjs.script.compile([
-      sig,
-      Buffer.from(redeemAddress.publicKey, 'hex')
-    ])
-    const paymentWithInput = bjs.payments.p2wsh({ redeem: { output: timelockOutput, input: timelockInput, network }, network })
-
-    const getFinalScripts = () => {
-      return { finalScriptWitness: witnessStackToScriptWitness(paymentWithInput.witness) }
+      psbt.finalizeInput(index, () => {
+        return { finalScriptWitness: witnessStackToScriptWitness(paymentWithInput.witness) }
+      })
     }
 
-    psbt.finalizeInput(0, getFinalScripts)
-
     const hex = psbt.extractTransaction().toHex()
-    return sendRawTransaction(hex) // TODO: SEND RAW TRANSACTIOJN - SUPPORT IN BITCOIN CAL
+    return sendRawTransaction(hex)
   }
 }
 

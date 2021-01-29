@@ -89,8 +89,8 @@ export default {
       if (process.client) {
         this.loading = true
         this.fiatRate = await getFiatRate('usd')
-        await this.addBalances(await getAddresses(200, false))
-        await this.addBalances(await getAddresses(200, true))
+        await this.addBalances(await getAddresses(0, 200, false))
+        await this.addBalances(await getAddresses(0, 200, true))
         this.loading = false
       }
     },
