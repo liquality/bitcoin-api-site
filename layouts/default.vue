@@ -26,7 +26,7 @@
         <p><b-icon-exclamation-triangle variant="danger" font-scale="2" /></p>
         <h4>Warning!</h4>
         <p>This is alpha software that has not been fully audited. Use at your own risk.</p>
-        <p><button class="btn btn-danger" @click="updateNetwork({ network: 'mainnet' }); showWarningModal = false">I Understand</button></p>
+        <p><button class="btn btn-danger" @click="showWarningModal = false">I Understand</button></p>
       </div>
     </b-modal>
     <div class="bg-light pt-4 pb-4">
