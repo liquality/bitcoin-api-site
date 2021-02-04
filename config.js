@@ -1,7 +1,7 @@
 import { networks } from 'bitcoinjs-lib'
 
-const network = { name: 'mainnet', ...networks.bitcoin }
-const MAINNET_URL = 'https://localhost:4000'
-const TESTNET_URL = 'https://localhost:3000'
+const network = { name: 'testnet', ...networks.testnet }
+const MAINNET_URL = 'https://bitcoin-mainnet.liquality.io'
+const TESTNET_URL = 'https://bitcoin.liquality.io'
 
 export { network, MAINNET_URL, TESTNET_URL }
