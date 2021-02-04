@@ -2,6 +2,7 @@ import { network } from '@/config'
 import { isWalletEnabled } from '@/utils/wallet'
 
 export const state = () => ({
+  warningAccepted: false,
   connected: false
 })
 
@@ -22,11 +23,17 @@ export const actions = {
   },
   setConnected ({ commit }, { connected }) {
     commit('setConnected', connected)
+  },
+  acceptWarning ({ commit }) {
+    commit('setWarningAccepted')
   }
 }
 
 export const mutations = {
   setConnected (state, connected) {
     state.connected = connected
+  },
+  setWarningAccepted (state) {
+    state.warningAccepted = true
   }
 }

@@ -12,7 +12,8 @@ async function signMessage (message, address) {
 
 async function tryGetAddresses (index = 0, num = 200, change = false) {
   try {
-    return getAddresses(index, num, change)
+    const addresses = await getAddresses(index, num, change)
+    return addresses
   } catch (e) {
     return []
   }

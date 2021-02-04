@@ -21,12 +21,12 @@
         </b-collapse>
       </b-navbar>
     </header>
-    <b-modal id="modal-center" centered v-model="showWarningModal" hide-header hide-footer>
+    <b-modal id="modal-center" centered v-model="showWarningModal" hide-header hide-footer no-close-on-backdrop no-close-on-esc>
       <div class="text-center text-danger">
         <p><b-icon-exclamation-triangle variant="danger" font-scale="2" /></p>
         <h4>Warning!</h4>
         <p>This is alpha software that has not been fully audited. Use at your own risk.</p>
-        <p><button class="btn btn-danger" @click="showWarningModal = false">I Understand</button></p>
+        <p><button class="btn btn-danger" @click="acceptWarningModal()">I Understand</button></p>
       </div>
     </b-modal>
     <div class="bg-light pt-4 pb-4">
@@ -88,6 +88,7 @@ footer a {
 
 <script>
 import { network, MAINNET_URL, TESTNET_URL } from '@/config'
+import { mapState, mapActions } from 'vuex'
 import Logo from '@/assets/icons/logo.svg?inline'
 import GithubIcon from '@/assets/icons/github.svg?inline'
 import TwitterIcon from '@/assets/icons/twitter.svg?inline'
@@ -108,19 +109,25 @@ export default {
     }
   },
   computed: {
+    ...mapState(['warningAccepted']),
     network () {
       return network
     }
   },
   methods: {
+    ...mapActions(['acceptWarning']),
     setNetwork (network) {
       if (this.network === network) return
 
       if (network === 'mainnet') window.location.href = `${MAINNET_URL}${this.$route.fullPath}`
       if (network === 'testnet') window.location.href = `${TESTNET_URL}${this.$route.fullPath}`
     },
+    acceptWarningModal () {
+      this.acceptWarning()
+      this.showWarningModal = false
+    },
     showWarning () {
-      if (this.network.name === 'mainnet' && this.$route.path.startsWith('/apps/')) {
+      if (!this.warningAccepted && this.network.name === 'mainnet' && this.$route.path.startsWith('/apps/')) {
         this.showWarningModal = true
       }
     }
