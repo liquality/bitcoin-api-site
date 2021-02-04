@@ -1,62 +1,10 @@
-import * as base58 from 'bs58'
 import * as bjs from 'bitcoinjs-lib'
 import * as varuint from 'bip174/src/lib/converter/varint'
 import * as classify from 'bitcoinjs-lib/src/classify'
-import * as bitcoinMessage from 'bitcoinjs-message'
-
-const ADDR_TYPES = {
-  P2PKH: 'P2PKH',
-  P2SH: 'P2SH',
-  P2WPKH: 'P2WPKH',
-  P2WSH: 'P2WSH',
-  UNKNOWN: 'UNKNOWN'
-}
-
-function getAddressType (address) {
-  // bech32
-  if (Object.keys(bjs.networks).find(network => address.startsWith(bjs.networks[network].bech32))) {
-    return address.length > 42 ? ADDR_TYPES.P2WSH : ADDR_TYPES.P2WPKH
-  }
-  // base58
-  const prefix = base58.decode(address).toString('hex').substring(0, 2)
-  if (Object.keys(bjs.networks).find(network => Buffer.from([bjs.networks[network].scriptHash]).toString('hex') === prefix)) {
-    return ADDR_TYPES.P2SH
-  }
-  if (Object.keys(bjs.networks).find(network => Buffer.from([bjs.networks[network].pubKeyHash]).toString('hex') === prefix)) {
-    return ADDR_TYPES.P2PKH
-  }
-  return ADDR_TYPES.UNKNOWN
-}
-
-function verifyMessage (message, address, sig) {
-  try {
-    return bitcoinMessage.verify(message, address, Buffer.from(sig, 'hex'), '\u0018Bitcoin Signed Message:\n', true)
-  } catch (e) {
-    console.warn(e)
-    return false
-  }
-}
-
-function verifyScript (address, script) {
-  const addressType = getAddressType(address)
-  const output = bjs.script.fromASM(script)
-  const network = bjs.networks.testnet
-  let payment
-  try {
-    if (addressType === ADDR_TYPES.P2WSH) {
-      payment = bjs.payments.p2wsh({ redeem: { output, network } }, network)
-    }
-    if (addressType === ADDR_TYPES.P2SH) {
-      payment = bjs.payments.p2sh({ redeem: { output, network } }, network)
-    }
-    // TODO wrapped segwit (p2sh(p2wsh))
-    return payment && payment.address === address
-  } catch (e) { }
-  return false
-}
+import { network } from '@/config'
 
 function getPubKeyHash (address) {
-  const outputScript = bjs.address.toOutputScript(address, bjs.networks.testnet)
+  const outputScript = bjs.address.toOutputScript(address, network)
   const type = classify.output(outputScript)
   if (![classify.types.P2PKH, classify.types.P2WPKH].includes(type)) {
     throw new Error('Not possible to derive public key hash.')
@@ -72,7 +20,6 @@ function getPubKeyHash (address) {
 }
 
 function getScriptAddress (scriptOutput) {
-  const network = bjs.networks.testnet
   return bjs.payments.p2wsh({ redeem: { output: scriptOutput }, network }, { network }).address
 }
 
@@ -186,4 +133,4 @@ function witnessStackToScriptWitness (witness) {
   return buffer
 }
 
-export { ADDR_TYPES, getAddressType, getPubKeyHash, getScriptAddress, verifyMessage, verifyScript, getByteCount, witnessStackToScriptWitness }
+export { getPubKeyHash, getScriptAddress, getByteCount, witnessStackToScriptWitness }

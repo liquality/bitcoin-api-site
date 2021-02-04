@@ -1,3 +1,5 @@
+import { network } from '@/config'
+
 function shortHash (hash) {
   return `${hash.slice(0, 6)}..${hash.slice(-6)}`
 }
@@ -12,7 +14,7 @@ function timestampToString (timestamp) {
 }
 
 function explorerLink (hash) {
-  return `https://blockstream.info/testnet/${hash}`
+  return network.name === 'testnet' ? `https://blockstream.info/testnet/${hash}` : `https://blockstream.info/${hash}`
 }
 
 export { shortHash, addressShort, timestampToString, explorerLink }

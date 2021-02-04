@@ -1,7 +1,18 @@
 <template>
   <div>
-    <h1 class="mb-4">Multisig <small class="text-muted">(testnet only)</small></h1>
+    <h1 class="mb-4">Multisig</h1>
     <div v-if="created">
+      <div class="row">
+        <div class="col">
+          <div class="alert alert-outline alert-danger d-flex justify-content-between align-items-center" role="alert">
+            <div><b-icon-info-circle-fill /> Attention! Keep this page safe or you may lose access to your funds.</div>
+            <div>
+              <button class="btn btn-sm btn-primary" @click="copyLink"><b-icon-clipboard /> Copy Link</button>
+              <button class="btn btn-sm btn-primary" @click="downloadBackup"><b-icon-download /> Download Backup</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="row">
         <div class="col">
           <small class="text-muted">Address</small>
@@ -173,6 +184,25 @@ export default {
     timestampToString,
     isPublicKeyValid (publicKey) {
       return publicKey && publicKey.length === 66
+    },
+    downloadBackup () {
+      const text = `BITCOIN APP BACKUP
+Url: ${window.location.href}
+Type: Multisig
+Multisig Address: ${this.multisigAddress}
+Script Hex: ${this.multisigScript.toString('hex')}
+Script ASM: ${this.multisigScriptPretty}
+Total Keys: ${this.totalKeys}
+Required Keys: ${this.requiredKeys}
+Public Keys List: ${this.publicKeys.join('\n')}
+`
+      const element = document.createElement('a')
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
+      element.setAttribute('download', `multisig-${this.requiredKeys}-of-${this.totalKeys}.bak.txt`)
+      element.style.display = 'none'
+      document.body.appendChild(element)
+      element.click()
+      document.body.removeChild(element)
     },
     async copy (text) {
       await navigator.clipboard.writeText(text)

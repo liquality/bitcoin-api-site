@@ -17,9 +17,10 @@
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex'
 import { addressShort } from '@/utils/display'
 import { createIcon } from '@download/blockies'
-import { connect } from '@/utils/wallet'
+import { isWalletEnabled, getAddresses } from '@/utils/wallet'
 
 export default {
   data () {
@@ -29,35 +30,60 @@ export default {
       showAccountModal: false
     }
   },
+  computed: {
+    ...mapState(['connected'])
+  },
   methods: {
     addressShort,
+    ...mapActions(['connectWallet', 'setConnected']),
     async connect () {
-      const accounts = await connect()
+      try {
+        await this.connectWallet()
+      } catch (e) {
+        this.$bvToast.toast('Ensure wallet is connected on correct network', {
+          autoHideDelay: 5000,
+          noCloseButton: true,
+          top: 100
+        })
+      } // Wallet not available or connected
+    },
+    async setup () {
+      const accounts = await getAddresses(0, 1)
       this.account = accounts[0]
       this.icon = createIcon({
         seed: this.account.address,
-        scale: 3
+        scale: 3,
+        bgcolor: '#fff'
       }).toDataURL()
+    },
+    reset () {
+      this.icon = null
+      this.account = null
     },
     async copy (text) {
       await navigator.clipboard.writeText(text)
     }
   },
-  async created () {
-    try {
-      await window.bitcoin.request({ method: 'wallet_getAddresses', params: [] }) // TODO: should this be something in injection?
-      const connectedNetwork = await window.bitcoin.request({ method: 'wallet_getConnectedNetwork', params: [] })
-      if (connectedNetwork.name !== 'bitcoin_testnet') {
-        alert('Select testnet in the wallet before connecting')
-        throw new Error('Invalid network')
+  async mounted () {
+    if (await isWalletEnabled()) {
+      try {
+        await this.connectWallet()
+      } catch (e) {
+        console.warn(e)
       }
-      await this.connect()
-    } catch (e) {} // Wallet not available or connected
+    }
+  },
+  watch: {
+    connected (newValue) {
+      if (newValue) this.setup()
+      else this.reset()
+    }
   }
 }
 </script>
 
 <style lang="scss">
+
 .account {
   .icon {
     position: relative;

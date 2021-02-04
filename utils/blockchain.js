@@ -1,31 +1,39 @@
-const axios = require('axios')
+import axios from 'axios'
+import { network } from '@/config'
 
-const BASE_URL = 'https://liquality.io/testnet/electrs'
+async function getBaseUrl () {
+  return network.name === 'testnet' ? 'https://liquality.io/testnet/electrs' : 'https://liquality.io/electrs'
+}
 
 async function getFees () {
-  return { slow: 1, average: 2, fast: 3 }
-  // mainnet: https://mempool.space/api/v1/fees/recommended
+  if (network.name === 'testnet') {
+    return { slow: 1, average: 2, fast: 3 }
+  } else {
+    const result = await axios.get('https://mempool.space/api/v1/fees/recommended')
+    return { slow: result.data.hourFee, medium: result.data.halfHourFee, fast: result.data.fastestFee }
+  }
 }
 
 async function getLatestBlock () {
-  const result = await axios.get(`${BASE_URL}/blocks`)
+  const result = await axios.get(`${getBaseUrl()}/blocks`)
   const blocks = result.data
   return blocks[0]
-  // TODO: make sure median time is used
 }
 
 async function getTransaction (hash) {
-  const result = await axios.get(`${BASE_URL}/tx/${hash}`)
+  const result = await axios.get(`${getBaseUrl()}/tx/${hash}`)
   return result.data
 }
 
 async function getTransactions (address) {
-  const result = await axios.get(`${BASE_URL}/address/${address}/txs`)
+  const baseUrl = await getBaseUrl()
+  const result = await axios.get(`${baseUrl}/address/${address}/txs`)
   return result.data
 }
 
 async function getUtxos (address) {
-  const result = await axios.get(`${BASE_URL}/address/${address}/utxo`)
+  const baseUrl = await getBaseUrl()
+  const result = await axios.get(`${baseUrl}/address/${address}/utxo`)
   return result.data
 }
 
@@ -36,7 +44,7 @@ async function getBalance (address) {
 }
 
 async function sendRawTransaction (hex) {
-  const result = await axios.post(`${BASE_URL}/tx`, hex)
+  const result = await axios.post(`${getBaseUrl()}/tx`, hex)
   return result.data
 }
 

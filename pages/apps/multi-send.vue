@@ -1,8 +1,7 @@
 <template>
   <div>
-    <h1 class="mb-4">Multi Send <small class="text-muted">(testnet only)</small></h1>
+    <h1 class="mb-4">Multi Send</h1>
     <form @submit.prevent="send" autocomplete="off">
-      <small class="text-muted"><b-icon-info-circle /> Make sure the first few addresses (20) of your wallet have utxos.</small>
       <div class="form-row mt-2">
         <div class="form-group col">
           <div class="input-group">
@@ -43,7 +42,8 @@
           <span class="text-muted">Transaction:</span> <a :href="explorerLink(tx)" target="_blank">{{ shortHash(tx) }}</a>
         </div>
         <div class="col text-right">
-          <button class="btn btn-primary" type="submit" :disabled="!isValid">Send</button>
+          <button v-if="connected" class="btn btn-primary" type="submit" :disabled="!isValid">Send</button>
+          <button v-else class="btn btn-primary" type="button" @click="connectWallet()">Connect Wallet</button>
         </div>
       </div>
     </form>
@@ -51,7 +51,9 @@
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex'
 import validateBitcoinAddress from 'bitcoin-address-validation'
+import { network } from '@/config'
 import { explorerLink, timestampToString, shortHash } from '@/utils/display'
 import { scripts } from '@/utils/scripts'
 
@@ -65,6 +67,7 @@ export default {
     }
   },
   computed: {
+    ...mapState(['connected']),
     numRecipientsValid () {
       return Number.isInteger(this.numRecipients)
     },
@@ -76,12 +79,13 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['connectWallet']),
     shortHash,
     explorerLink,
     timestampToString,
     isAddressValid (address) {
       const validAddress = validateBitcoinAddress(address)
-      return validAddress && validAddress.network === 'testnet' && ['p2pkh', 'p2wpkh'].includes(validAddress.type)
+      return validAddress && validAddress.network === network.name && ['p2pkh', 'p2wpkh'].includes(validAddress.type)
     },
     async copy (text) {
       await navigator.clipboard.writeText(text)

@@ -1,6 +1,8 @@
 <template>
   <span class="pay-with-liquality">
-    <button type="button" class="btn btn-primary btn-block" v-on="$listeners" @click="pay"><b-icon-credit-card class="mr-2" /> Pay</button>
+    <button type="button" class="btn btn-primary btn-block" v-on="$listeners" @click="pay" :disabled="!address || !amount">
+      <b-icon-credit-card class="mr-2" /> Pay
+    </button>
   </span>
 </template>
 

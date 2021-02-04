@@ -1,8 +1,10 @@
 import BigNumber from 'bignumber.js'
 import * as bjs from 'bitcoinjs-lib'
+import { network } from '@/config'
 import { getPubKeyHash, getByteCount, witnessStackToScriptWitness } from './bitcoin'
 import { getLatestBlock, getTransaction, getUtxos, getFees, sendRawTransaction } from './blockchain'
-import { getInputs, getAddresses, tryGetAddresses } from './wallet'
+import { getAddresses, tryGetAddresses } from './wallet'
+import { getInputs } from './tx'
 
 const OPS = bjs.script.OPS
 
@@ -20,8 +22,6 @@ function decodeScript (script) {
 
 const multisend = {
   async send (sendAddresses, amounts) {
-    const network = bjs.networks.testnet
-
     const targets = sendAddresses.map((addr, i) => ({
       address: addr,
       value: BigNumber(amounts[i]).times(1e8).toNumber(),
@@ -73,7 +73,6 @@ const multisend = {
 
 const multisig = {
   output (m, keys) {
-    const network = bjs.networks.testnet
     return bjs.payments.p2ms({ network, m, pubkeys: keys.map(k => Buffer.from(k, 'hex')) }).output
   },
   decode (script) {
@@ -107,7 +106,6 @@ const multisig = {
   },
   async createdRedeem (address, script, redeemAddress) {
     const scriptDetails = this.decode(script)
-    const network = bjs.networks.testnet
     const utxos = await getUtxos(address)
     if (!utxos.length) throw new Error('Nothing to redeem')
 
@@ -142,7 +140,6 @@ const multisig = {
     return psbt.toBase64()
   },
   async signRedeem (psbtBase64, derivationPath) {
-    const network = bjs.networks.testnet
     await window.bitcoin.enable()
     const psbt = bjs.Psbt.fromBase64(psbtBase64, { network })
     const inputsToSign = psbt.txInputs.map((v, index) => ({ index, derivationPath }))
@@ -150,20 +147,17 @@ const multisig = {
     return signedPSBTBase64
   },
   async sendRedeem (psbtBase64) {
-    const network = bjs.networks.testnet
     const signedPSBT = bjs.Psbt.fromBase64(psbtBase64, { network })
     signedPSBT.finalizeAllInputs()
     const hex = signedPSBT.extractTransaction().toHex()
     return await sendRawTransaction(hex)
   },
   async getSignatures (psbtBase64) {
-    const network = bjs.networks.testnet
     if (!psbtBase64) return []
     const psbt = bjs.Psbt.fromBase64(psbtBase64, { network })
     return psbt.data.inputs[0].partialSig.map(psig => ({ publicKey: psig.pubkey.toString('hex'), signature: psig.signature.toString('hex') }))
   },
   getRedeemAddress (psbtBase64) {
-    const network = bjs.networks.testnet
     if (!psbtBase64) return
     const psbt = bjs.Psbt.fromBase64(psbtBase64, { network })
     return psbt.txOutputs[0].address
@@ -205,7 +199,6 @@ const timelock = {
   },
   async redeem (address, script, redeemAddress) {
     const scriptDetails = this.decode(script)
-    const network = bjs.networks.testnet
     const utxos = await getUtxos(address)
     if (!utxos.length) throw new Error('Nothing to redeem')
 

@@ -1,6 +1,6 @@
 <template>
   <div class="apps">
-    <h1 class="mb-4">Bitcoin Applications <small class="text-muted">(testnet only)</small></h1>
+    <h1 class="mb-4">Bitcoin Applications</h1>
     <div class="row">
       <div class="col-lg-4 mb-4">
         <router-link class="link-unstyled" to="/apps/payment">

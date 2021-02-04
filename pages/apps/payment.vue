@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="mb-4">Payment <small class="text-muted">(testnet only)</small></h1>
+    <h1 class="mb-4">Payment</h1>
     <div class="row">
       <div class="col">
         <div class="row mb-2">
@@ -37,6 +37,7 @@
 <script>
 import QR from 'qrcode'
 import qs from 'query-string'
+import { network } from '@/config'
 import { explorerLink, shortHash } from '@/utils/display'
 import { getBalance } from '@/utils/blockchain'
 import PayWithLiquality from '@/components/PayWithLiquality'
@@ -50,7 +51,7 @@ export default {
       qrcode: null,
       tx: null,
       amount: 0.00001,
-      address: 'tb1qp6hf0hev83klhxwgmlltrmkcl6wdatz7n95nzz',
+      address: network.name === 'testnet' ? 'tb1qp6hf0hev83klhxwgmlltrmkcl6wdatz7n95nzz' : null,
       balance: 0
     }
   },
@@ -63,7 +64,9 @@ export default {
       await navigator.clipboard.writeText(text)
     },
     async refreshBalance () {
-      this.balance = await getBalance(this.address)
+      if (this.address) {
+        this.balance = await getBalance(this.address)
+      }
     },
     updateQR () {
       let uri = `bitcoin:${this.address}`

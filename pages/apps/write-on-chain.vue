@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="mb-4">Write on chain <small class="text-muted">(testnet only)</small></h1>
+    <h1 class="mb-4">Write on chain</h1>
     <form @submit.prevent="write">
       <div class="form-group">
         <label for="message">Message</label>

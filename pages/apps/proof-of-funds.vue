@@ -1,6 +1,6 @@
 <template>
   <div class="proof-of-funds">
-    <h1 class="mb-4">Proof of Funds <small class="text-muted">(testnet only)</small></h1>
+    <h1 class="mb-4">Proof of Funds</h1>
     <form @submit.prevent="sign">
       <div class="form-group">
         <label for="message">Message</label>
@@ -12,7 +12,7 @@
         <div v-for="item in sigs" :key="item.address" class="col-lg-6 col-sm-12 pb-3">
           <div class="proof-of-funds_address border border-success p-2">
             <label class="form-check-label" :for="item.address">
-              {{ item.address }} <a class="btn btn-link btn-sm" target="_blank" :href="getAddressLink(item.address, item.sig)"><b-icon-box-arrow-up-right /></a>
+              {{ item.address }}
             </label>
             <div class="text-primary">{{ item.balance }} BTC <span class="text-muted">${{ getFiatValue(item.balance) }}</span></div>
             <div class="text-success">Sig: {{ shortHash(item.sig) }} <button type="button" class="btn btn-link btn-sm" @click="copy(item.sig)"><b-icon-clipboard /></button></div>
@@ -21,9 +21,10 @@
       </div>
       <div v-else class="form-group">
         <label for="addresses">Addresses
-          <div v-if="loading" class="spinner-border spinner-border-sm" role="status">
+          <div v-if="connected && loading" class="spinner-border spinner-border-sm" role="status">
             <span class="sr-only">Loading...</span>
           </div>
+          <div v-else-if="!connected" class="text-danger"><small>Connect wallet to select addresses</small></div>
           <template v-else>
             ({{ numSelected }} Selected)
             <button type="button" class="btn btn-sm btn-secondary mr-2" @click="selectAllAddresses">Select All</button>
@@ -45,15 +46,16 @@
       </div>
       <div class="text-right">
         <button v-if="hasSigned" type="button" class="btn btn-danger" @click="reset">Reset</button>
-        <button v-else type="submit" class="btn btn-primary">Sign</button>
+        <button v-else-if="connected" type="submit" class="btn btn-primary">Sign</button>
+        <button v-else class="btn btn-primary" type="button" @click="connectWallet()">Connect Wallet</button>
       </div>
     </form>
   </div>
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex'
 import BN from 'bignumber.js'
-import qs from 'query-string'
 import { getAddresses, signMessage } from '@/utils/wallet'
 import { getUtxos } from '@/utils/blockchain'
 import { getFiatRate } from '@/utils/fiat'
@@ -70,6 +72,7 @@ export default {
     }
   },
   computed: {
+    ...mapState(['connected']),
     hasSigned () {
       return this.sigs.length > 0
     },
@@ -84,6 +87,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['connectWallet']),
     shortHash,
     async load () {
       if (process.client) {
@@ -110,10 +114,6 @@ export default {
     getFiatValue (value) {
       return (value * this.fiatRate).toFixed(2)
     },
-    getAddressLink (address, sig) {
-      const query = qs.stringify({ message: this.message, messageSig: sig })
-      return `/address/${address}?${query}`
-    },
     selectAllAddresses () {
       this.selected = Array(this.balances.length).fill(true)
     },
@@ -129,8 +129,15 @@ export default {
       this.load()
     }
   },
-  async created () {
-    await this.load()
+  watch: {
+    connected (newValue) {
+      if (newValue) this.reset()
+    }
+  },
+  async mounted () {
+    if (this.connected) {
+      await this.load()
+    }
   }
 }
 </script>
