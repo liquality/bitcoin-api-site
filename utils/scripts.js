@@ -195,7 +195,7 @@ const timelock = {
   async canRedeem (script) {
     const scriptDetails = this.decode(script)
     const latestBlock = await getLatestBlock()
-    return latestBlock.mediantime >= scriptDetails.timestamp // TODO: change to median time when available
+    return latestBlock.mediantime >= scriptDetails.timestamp
   },
   async redeem (address, script, redeemAddress) {
     const scriptDetails = this.decode(script)

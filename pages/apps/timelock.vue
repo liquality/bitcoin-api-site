@@ -32,8 +32,9 @@
         </div>
       </div>
       <div>
-        <button class="btn btn-primary" type="button" @click="redeem" :disabled="balance == 0 || redeemTx">
+        <button class="btn btn-primary" type="button" @click="redeem" :disabled="balance == 0 || redeemTx || !canRedeem">
           <template v-if="redeemTx">Redeemed</template>
+          <template v-else-if="!canRedeem">Timelocked</template>
           <template v-else-if="balance > 0">Redeem</template>
           <template v-else>Nothing To Redeem</template>
         </button>
@@ -82,7 +83,8 @@ export default {
       time: null,
       created: false,
       redeemTx: null,
-      balance: 0
+      balance: 0,
+      canRedeem: false
     }
   },
   computed: {
@@ -141,6 +143,7 @@ Claim Timestamp: ${this.timestamp}
     async create () {
       this.created = true
       this.balance = await getBalance(this.timelockAddress)
+      this.canRedeem = await scripts.timelock.canRedeem(this.timelockScriptPretty)
       this.$router.push({ query: { claimAddress: this.claimAddress, timestamp: this.timestamp } })
     },
     async redeem () {
@@ -149,8 +152,8 @@ Claim Timestamp: ${this.timestamp}
       this.redeemTx = await scripts.timelock.redeem(this.timelockAddress, this.timelockScriptPretty, signAddress)
     }
   },
-  async created () {
-    if (process.client && this.$route.query.claimAddress) {
+  async mounted () {
+    if (this.$route.query.claimAddress) {
       this.claimAddress = this.$route.query.claimAddress
       const date = new Date(this.$route.query.timestamp * 1000)
       date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
