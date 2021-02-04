@@ -15,13 +15,15 @@ async function getFees () {
 }
 
 async function getLatestBlock () {
-  const result = await axios.get(`${getBaseUrl()}/blocks`)
+  const baseUrl = await getBaseUrl()
+  const result = await axios.get(`${baseUrl}/blocks`)
   const blocks = result.data
   return blocks[0]
 }
 
 async function getTransaction (hash) {
-  const result = await axios.get(`${getBaseUrl()}/tx/${hash}`)
+  const baseUrl = await getBaseUrl()
+  const result = await axios.get(`${baseUrl}/tx/${hash}`)
   return result.data
 }
 
@@ -44,7 +46,8 @@ async function getBalance (address) {
 }
 
 async function sendRawTransaction (hex) {
-  const result = await axios.post(`${getBaseUrl()}/tx`, hex)
+  const baseUrl = await getBaseUrl()
+  const result = await axios.post(`${baseUrl}/tx`, hex)
   return result.data
 }
 
