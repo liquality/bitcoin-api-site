@@ -5,7 +5,7 @@
       <div class="row">
         <div class="col">
           <div class="alert alert-outline alert-danger d-flex justify-content-between align-items-center" role="alert">
-            <div><b-icon-info-circle-fill /> Attention! Keep this page safe or you may lose access to your funds.</div>
+            <div><b-icon-info-circle-fill /> Attention! Save this link or you may lose access to your funds.</div>
             <div>
               <button class="btn btn-sm btn-primary" @click="copyLink"><b-icon-clipboard /> Copy Link</button>
               <button class="btn btn-sm btn-primary" @click="downloadBackup"><b-icon-download /> Download Backup</button>
@@ -66,6 +66,9 @@
           <button type="button" class="btn btn-primary float-right" v-else disabled>
             Nothing to redeem
           </button>
+          <button type="button" class="btn btn-danger float-right mr-2" v-if="psbt" @click="resetSignatures()">
+            Reset
+          </button>
           <div v-if="redeemTx">
             <small><span class="text-muted">Redeem Transaction:</span> <a :href="explorerLink(redeemTx)" target="_blank">{{ shortHash(redeemTx) }}</a></small>
           </div>
@@ -98,7 +101,7 @@
             <div class="input-group-prepend"><span class="input-group-text">Required Keys</span></div>
             <select v-model.number="requiredKeys" class="form-control" :class="{'is-invalid': requiredKeys && !requiredKeysValid}">
               <option disabled value="">Select required</option>
-              <option v-for="n in (totalKeys ? totalKeys - 1 : 1)" :key="n">{{ n }}</option>
+              <option v-for="n in (totalKeys ? totalKeys : 1)" :key="n">{{ n }}</option>
             </select>
           </div>
           <small v-if="requiredKeys && !requiredKeysValid" class="text-danger">Required Keys must be less than total keys.</small>
@@ -148,7 +151,7 @@ export default {
       return Number.isInteger(this.totalKeys)
     },
     requiredKeysValid () {
-      return Number.isInteger(this.requiredKeys) && this.requiredKeys < this.totalKeys
+      return Number.isInteger(this.requiredKeys) && this.requiredKeys <= this.totalKeys
     },
     isValid () {
       const pubKeysValid = this.publicKeys.length && this.publicKeys.every(key => this.isPublicKeyValid(key))
@@ -164,7 +167,6 @@ export default {
     multisigAddress () {
       return getScriptAddress(this.multisigScript) // TODO: Is this the same as p2wsh(redeem:p2ms).address ???
     },
-
     isComplete () {
       return this.numSignatures === this.requiredKeys
     },
@@ -215,8 +217,7 @@ Public Keys List: ${this.publicKeys.join('\n')}
     },
     async create () {
       this.created = true
-      this.balance = await getBalance(this.multisigAddress)
-      this.$router.push({ query: { ...this.$route.query, totalKeys: this.totalKeys, requiredKeys: this.requiredKeys, publicKeys: this.publicKeys.join(',') } })
+      this.$router.push({ query: { ...this.$route.query, totalKeys: this.totalKeys, requiredKeys: this.requiredKeys, publicKeys: this.publicKeys.join(',') } }, () => this.updateData())
       await this.updateData()
     },
     async sign () {
@@ -228,26 +229,33 @@ Public Keys List: ${this.publicKeys.join('\n')}
       if (this.lastSig) {
         this.redeemTx = await scripts.multisig.sendRedeem(signedPsbt)
       }
-      this.$router.push({ query: { ...this.$route.query, psbt: signedPsbt } })
-      await this.updateData()
+      this.$router.push({ query: { ...this.$route.query, psbt: signedPsbt } }, () => this.updateData())
+    },
+    async resetSignatures () {
+      this.$router.push({ query: { ...this.$route.query, psbt: undefined } }, () => this.updateData())
     },
     async updateData () {
-      this.canRedeem = await scripts.multisig.canRedeem(this.multisigAddress, this.multisigScriptPretty)
-      this.signatures = await scripts.multisig.getSignatures(this.psbt)
-      this.redeemAddress = scripts.multisig.getRedeemAddress(this.psbt)
-      if (process.client) {
-        const addresses = await tryGetAddresses(0, 200)
-        this.signed = addresses.some(a => this.signatures.find(s => s.publicKey === a.publicKey.toString('hex')))
+      if (this.created) {
+        this.signatures = await scripts.multisig.getSignatures(this.psbt)
+        this.redeemAddress = scripts.multisig.getRedeemAddress(this.psbt)
+        this.canRedeem = await scripts.multisig.canRedeem(this.multisigAddress, this.multisigScriptPretty)
+        await this.refreshBalance()
+        if (process.client && !this.signed) {
+          const addresses = await tryGetAddresses(0, 200)
+          this.signed = addresses.some(a => this.signatures.find(s => s.publicKey === a.publicKey.toString('hex')))
+        }
       }
     }
   },
-  async created () {
-    if (process.client && this.$route.query.publicKeys) {
+  async mounted () {
+    if (this.$route.query.publicKeys) {
       this.totalKeys = parseInt(this.$route.query.totalKeys)
       this.requiredKeys = parseInt(this.$route.query.requiredKeys)
       this.publicKeys = this.$route.query.publicKeys.split(',')
-      await this.create()
+      this.created = true
+      await this.updateData()
     }
+    this.interval = setInterval(() => this.updateData(), 5000)
   }
 }
 </script>

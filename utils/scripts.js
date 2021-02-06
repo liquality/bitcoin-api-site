@@ -3,7 +3,7 @@ import * as bjs from 'bitcoinjs-lib'
 import { network } from '@/config'
 import { getPubKeyHash, getByteCount, witnessStackToScriptWitness } from './bitcoin'
 import { getLatestBlock, getTransaction, getUtxos, getFees, sendRawTransaction } from './blockchain'
-import { getAddresses, tryGetAddresses } from './wallet'
+import { getAddresses, tryGetAddresses, sendTransaction } from './wallet'
 import { getInputs } from './tx'
 
 const OPS = bjs.script.OPS
@@ -191,6 +191,9 @@ const timelock = {
       timestamp: bjs.script.number.decode(scriptStack[0]),
       pubKeyHash: scriptStack[5].toString('hex')
     }
+  },
+  async fund (timelockAddress, amount) {
+    return sendTransaction(timelockAddress, amount)
   },
   async canRedeem (script) {
     const scriptDetails = this.decode(script)

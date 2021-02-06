@@ -1,12 +1,13 @@
 <template>
   <div class="account">
-    <Modal v-if="showAccountModal" @close="showAccountModal = false" type="modal-md" title="Account">
-      <div class="modal-body">
+    <b-modal centered v-model="showAccountModal" title="Account" hide-footer>
+      <div v-if="account">
         <small class="text-muted">Identity Address</small>
-        <p>{{ account.address }}</p>
-        <a @click="copy(account.publicKey.toString('hex'))" class="text-primary"><b-icon-clipboard /> <small>Copy Public Key</small></a>
+        <p>{{ account.address }} <a @click="copy(account.address)" class="btn btn-sm btn-link"><b-icon-clipboard /></a></p>
+        <small class="text-muted">Public Key</small>
+        <p class="text-wrap-anywhere">{{ account.publicKey.toString('hex') }} <a @click="copy(account.publicKey.toString('hex'))" class="btn btn-sm btn-link"><b-icon-clipboard /></a></p>
       </div>
-    </Modal>
+    </b-modal>
     <button v-if="account" type="button" class="btn btn-primary" @click="showAccountModal = true">
       {{ addressShort(account.address) }} <img class="icon ml-2" :src="icon" />
     </button>
@@ -83,6 +84,9 @@ export default {
 </script>
 
 <style lang="scss">
+.text-wrap-anywhere {
+  overflow-wrap: anywhere;
+}
 
 .account {
   .icon {
