@@ -15,7 +15,7 @@
       </div>
       <div class="row mb-4">
         <div class="col">
-          <small class="text-muted">Address</small>
+          <small class="text-muted">Timelock Address</small>
           <div>
             <a :href="explorerLink(timelockAddress)" target="_blank" class="h4 text-primary">{{ timelockAddress }}</a>
             <CopyButton @click="copy(timelockAddress)"><b-icon-clipboard /></CopyButton>
@@ -25,8 +25,8 @@
       </div>
       <div class="row">
         <div class="col">
-          <small class="text-muted">Balance</small><p><span class="text-primary">{{ balance }}</span> BTC
-          <button class="btn btn-sm btn-light" @click="refreshBalance"><b-icon-arrow-repeat /></button></p>
+          <small class="text-muted">Balance</small>
+          <p><span class="text-primary">{{ balance }}</span> BTC <button class="btn btn-sm btn-light" @click="refreshBalance"><b-icon-arrow-repeat /></button></p>
         </div>
       </div>
       <div class="row">

@@ -13,15 +13,21 @@
           </div>
         </div>
       </div>
-      <div class="row">
+      <div class="row mb-4">
         <div class="col">
-          <small class="text-muted">Address</small>
-          <div><a :href="explorerLink(multisigAddress)" target="_blank" class="h4 text-primary">{{ multisigAddress }}</a><CopyButton @click="copy(multisigAddress)"><b-icon-clipboard /></CopyButton></div>
-          <small>Balance: <span class="text-primary">{{ balance }}</span> BTC</small>
-          <button class="btn btn-sm btn-light" @click="refreshBalance"><b-icon-arrow-repeat /></button>
+          <small class="text-muted">Multisig Address</small>
+          <div>
+            <a :href="explorerLink(multisigAddress)" target="_blank" class="h4 text-primary">{{ multisigAddress }}</a>
+            <CopyButton @click="copy(multisigAddress)"><b-icon-clipboard /></CopyButton>
+            <div><small class="text-muted">This is your multi-sig address. If you want to add funds into the multi-sig please send funds to this address.</small></div>
+          </div>
         </div>
       </div>
       <div class="row">
+        <div class="col">
+          <small class="text-muted">Balance</small>
+          <p><span class="text-primary">{{ balance }}</span> BTC <button class="btn btn-sm btn-light" @click="refreshBalance"><b-icon-arrow-repeat /></button></p>
+        </div>
         <div class="col">
           <small class="text-muted">Total Keys</small>
           <p>{{ totalKeys }}</p>
