@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="timelock">
     <h1 class="mb-4">Timelock</h1>
     <div v-if="created">
       <div class="row">
@@ -13,15 +13,20 @@
           </div>
         </div>
       </div>
-      <div class="row">
+      <div class="row mb-4">
         <div class="col">
           <small class="text-muted">Address</small>
           <div>
             <a :href="explorerLink(timelockAddress)" target="_blank" class="h4 text-primary">{{ timelockAddress }}</a>
-            <button class="btn btn-sm btn-light" @click="copy(timelockAddress)"><b-icon-clipboard /></button>
+            <CopyButton @click="copy(timelockAddress)"><b-icon-clipboard /></CopyButton>
+            <div><small class="text-muted">This is your time lock address. If you want to add funds into the time lock, please send funds to this address.</small></div>
           </div>
-          <small>Balance: <span class="text-primary">{{ balance }}</span> BTC</small>
-          <button class="btn btn-sm btn-light" @click="refreshBalance"><b-icon-arrow-repeat /></button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <small class="text-muted">Balance</small><p><span class="text-primary">{{ balance }}</span> BTC
+          <button class="btn btn-sm btn-light" @click="refreshBalance"><b-icon-arrow-repeat /></button></p>
         </div>
       </div>
       <div class="row">
@@ -213,4 +218,6 @@ Claim Timestamp: ${this.timestamp}
 </script>
 
 <style lang="scss">
+.timelock {
+}
 </style>

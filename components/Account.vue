@@ -2,10 +2,10 @@
   <div class="account">
     <b-modal centered v-model="showAccountModal" title="Account" hide-footer>
       <div v-if="account">
-        <small class="text-muted">Identity Address</small>
-        <p>{{ account.address }} <a @click="copy(account.address)" class="btn btn-sm btn-link"><b-icon-clipboard /></a></p>
+        <small class="text-muted">Bitcoin Address</small>
+        <p>{{ account.address }} <CopyButton @click="copy(account.address)"><b-icon-clipboard /></CopyButton></p>
         <small class="text-muted">Public Key</small>
-        <p class="text-wrap-anywhere">{{ account.publicKey.toString('hex') }} <a @click="copy(account.publicKey.toString('hex'))" class="btn btn-sm btn-link"><b-icon-clipboard /></a></p>
+        <p class="text-wrap-anywhere">{{ account.publicKey.toString('hex') }} <CopyButton @click="copy(account.publicKey.toString('hex'))"><b-icon-clipboard /></CopyButton></p>
       </div>
     </b-modal>
     <button v-if="account" type="button" class="btn btn-primary" @click="showAccountModal = true">

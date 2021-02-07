@@ -16,7 +16,7 @@
       <div class="row">
         <div class="col">
           <small class="text-muted">Address</small>
-          <div><a :href="explorerLink(multisigAddress)" target="_blank" class="h4 text-primary">{{ multisigAddress }}</a><button class="btn btn-sm btn-light" @click="copy(multisigAddress)"><b-icon-clipboard /></button></div>
+          <div><a :href="explorerLink(multisigAddress)" target="_blank" class="h4 text-primary">{{ multisigAddress }}</a><CopyButton @click="copy(multisigAddress)"><b-icon-clipboard /></CopyButton></div>
           <small>Balance: <span class="text-primary">{{ balance }}</span> BTC</small>
           <button class="btn btn-sm btn-light" @click="refreshBalance"><b-icon-arrow-repeat /></button>
         </div>

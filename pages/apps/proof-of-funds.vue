@@ -15,7 +15,7 @@
               {{ item.address }}
             </label>
             <div class="text-primary">{{ item.balance }} BTC <span class="text-muted">${{ getFiatValue(item.balance) }}</span></div>
-            <div class="text-success">Sig: {{ shortHash(item.sig) }} <button type="button" class="btn btn-link btn-sm" @click="copy(item.sig)"><b-icon-clipboard /></button></div>
+            <div class="text-success">Sig: {{ shortHash(item.sig) }} <CopyButton @click="copy(item.sig)"><b-icon-clipboard /></CopyButton></div>
           </div>
         </div>
       </div>

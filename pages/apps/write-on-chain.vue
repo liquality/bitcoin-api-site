@@ -12,7 +12,7 @@
     </form>
     <div v-if="result" class="mt-3">
       <small class="text-muted">Transaction</small>
-      <div><a :href="explorerLink(result.hash)" target="_blank" class="h4 text-primary">{{ shortHash(result.hash) }}</a><button class="btn btn-sm btn-light" @click="copy(result.hash)"><b-icon-clipboard /></button></div>
+      <div><a :href="explorerLink(result.hash)" target="_blank" class="h4 text-primary">{{ shortHash(result.hash) }}</a><CopyButton @click="copy(result.hash)"><b-icon-clipboard /></CopyButton></div>
     </div>
   </div>
 </template>
