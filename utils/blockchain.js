@@ -10,7 +10,7 @@ async function getFees () {
     return { slow: 1, average: 2, fast: 3 }
   } else {
     const result = await axios.get('https://mempool.space/api/v1/fees/recommended')
-    return { slow: result.data.hourFee, medium: result.data.halfHourFee, fast: result.data.fastestFee }
+    return { slow: result.data.hourFee, average: result.data.halfHourFee, fast: result.data.fastestFee }
   }
 }
 

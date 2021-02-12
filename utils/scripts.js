@@ -232,6 +232,10 @@ const timelock = {
     const fee = byteCount * feePerByte
     const totalValue = utxos.reduce((total, utxo) => total + utxo.value, 0)
 
+    if (totalValue < fee) {
+      throw new Error(`Value not enough to pay for fee. Value: ${totalValue} sats, Fee ${fee} sats.`)
+    }
+
     psbt.addOutput({
       address: redeemAddress.address,
       value: totalValue - fee
