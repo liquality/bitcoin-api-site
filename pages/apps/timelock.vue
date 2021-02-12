@@ -32,7 +32,11 @@
       <div class="row">
         <div class="col">
           <small class="text-muted">Expiration</small>
-          <p>{{ timestampToString(timestamp) }}</p>
+          <p>~ {{ timestampToString(timestamp) }}
+            <template v-if="latestBlockTimestamp"><br />
+              <small class="text-muted">Current chain time: {{ timestampToString(latestBlockTimestamp) }}</small>
+            </template>
+          </p>
         </div>
         <div class="col">
           <small class="text-muted">Redeem Address</small>
@@ -99,13 +103,14 @@ import { network } from '@/config'
 import { explorerLink, timestampToString, shortHash } from '@/utils/display'
 import { getAddresses } from '@/utils/wallet'
 import { getScriptAddress } from '@/utils/bitcoin'
-import { getBalance } from '@/utils/blockchain'
+import { getBalance, getLatestBlock } from '@/utils/blockchain'
 import { scripts } from '@/utils/scripts'
 import * as bjs from 'bitcoinjs-lib'
 
 export default {
   data () {
     return {
+      latestBlockTimestamp: null,
       claimAddress: null,
       time: null,
       amount: 0,
@@ -191,6 +196,8 @@ Claim Timestamp: ${this.timestamp}
       if (this.created) {
         this.balance = await getBalance(this.timelockAddress)
         this.canRedeem = await scripts.timelock.canRedeem(this.timelockScriptPretty)
+        const latestBlock = await getLatestBlock()
+        this.latestBlockTimestamp = latestBlock.mediantime
       }
     }
   },
