@@ -48,7 +48,7 @@
         </div>
         </router-link>
       </div>
-      <div class="col-lg-4 mb-4">
+      <!-- <div class="col-lg-4 mb-4">
         <router-link class="link-unstyled" to="/apps/write-on-chain">
         <div class="card bg-primary text-white">
           <div class="card-body">
@@ -58,7 +58,7 @@
           </div>
         </div>
         </router-link>
-      </div>
+      </div> -->
       <div class="col-lg-4 mb-4">
         <router-link class="link-unstyled" to="/apps/multi-send">
         <div class="card bg-primary text-white">
