@@ -1,3 +1,5 @@
+import { network } from './config'
+
 export default {
   target: 'static',
   // Global page headers (https://go.nuxtjs.dev/config-head)
@@ -6,7 +8,8 @@ export default {
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: 'Liquality Bitcoin API' }
+      { hid: 'description', name: 'description', content: 'Liquality Bitcoin API' },
+      ...( network.name === 'mainnet' ? [{ hid: 'robots', name: 'robots', content: 'noindex' }] : [])
     ],
     link: [
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
@@ -36,6 +39,7 @@ export default {
     '@nuxtjs/eslint-module',
     '@nuxtjs/style-resources',
     '@nuxtjs/svg',
+    '@nuxtjs/google-analytics',
   ],
 
   // Modules (https://go.nuxtjs.dev/config-modules)
@@ -58,5 +62,9 @@ export default {
         overlay: false
       }
     }
+  },
+
+  googleAnalytics: {
+    id: 'UA-125155743-1'
   }
 }
