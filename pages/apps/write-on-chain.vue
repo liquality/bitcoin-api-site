@@ -10,35 +10,29 @@
       </div>
       <button class="btn btn-primary" type="submit" :disabled="working || !canWrite">Write</button>
     </form>
-    <div v-if="result" class="mt-3">
+    <div v-if="tx" class="mt-3">
       <small class="text-muted">Transaction</small>
-      <div><a :href="explorerLink(result.hash)" target="_blank" class="h4 text-primary">{{ shortHash(result.hash) }}</a><CopyButton @click="copy(result.hash)"><b-icon-clipboard /></CopyButton></div>
+      <div><a :href="explorerLink(tx)" target="_blank" class="h4 text-primary">{{ shortHash(tx) }}</a><CopyButton @click="copy(tx)"><b-icon-clipboard /></CopyButton></div>
     </div>
   </div>
 </template>
 
 <script>
 import { explorerLink, shortHash } from '@/utils/display'
-import { script } from 'bitcoinjs-lib'
+import { scripts } from '@/utils/scripts'
 
 export default {
   data () {
     return {
       message: null,
       working: false,
-      result: null
+      tx: null
     }
   },
   computed: {
     messageSize () {
       if (!this.message) return 0
       return Buffer.from(this.message, 'utf8').length
-    },
-    script () {
-      return script.compile([
-        script.OPS.OP_RETURN,
-        Buffer.from(this.message, 'utf8')
-      ])
     },
     canWrite () {
       return this.messageSize <= 80 && this.messageSize > 0
@@ -54,7 +48,7 @@ export default {
       if (!this.canWrite) return
 
       this.working = true
-      this.result = await window.bitcoin.request({ method: 'wallet_sendTransaction', params: [this.script.toJSON(), 0] })
+      this.tx = await scripts.opreturn.send(this.message)
       this.working = false
     }
   }

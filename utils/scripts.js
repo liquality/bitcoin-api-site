@@ -20,6 +20,61 @@ function decodeScript (script) {
   if (multisigScript) return { type: SCRIPT_TYPES.MULTISIG, ...multisigScript }
 }
 
+const opreturn = {
+  async send (message) {
+    const data = Buffer.from(message, 'utf8')
+    const embed = bjs.payments.embed({ data: [data] })
+
+    const targets = [{
+      script: embed.output,
+      value: 0,
+      external: true
+    }]
+
+    const { inputs, outputs } = await getInputs(targets)
+
+    const psbt = new bjs.Psbt({ network })
+    psbt.setVersion(2)
+
+    const externalAddresses = await getAddresses(0, 500, false)
+    const changeAddresses = await getAddresses(0, 500, true)
+    const allAddresses = [...externalAddresses, ...changeAddresses]
+
+    const inputsToSign = []
+    for (const [index, input] of inputs.entries()) {
+      const inputTx = await getTransaction(input.txid)
+      const prevout = inputTx.vout[input.vout]
+      const inputAddress = prevout.scriptpubkey_address
+      const { derivationPath } = allAddresses.find(a => a.address === inputAddress)
+      inputsToSign.push({ index, derivationPath })
+      psbt.addInput({
+        hash: input.txid,
+        index: input.vout,
+        witnessUtxo: {
+          value: input.value,
+          script: Buffer.from(prevout.scriptpubkey, 'hex')
+        }
+      })
+    }
+
+    for (const output of outputs) {
+      psbt.addOutput({
+        address: output.address,
+        script: output.script,
+        value: output.value
+      })
+    }
+
+    const psbtBase64 = psbt.toBase64()
+    const signedPSBTBase64 = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbtBase64, inputsToSign] })
+    const signedPSBT = bjs.Psbt.fromBase64(signedPSBTBase64, { network })
+    signedPSBT.finalizeAllInputs()
+
+    const hex = signedPSBT.extractTransaction().toHex()
+    return sendRawTransaction(hex)
+  }
+}
+
 const multisend = {
   async send (sendAddresses, amounts) {
     const targets = sendAddresses.map((addr, i) => ({
@@ -62,7 +117,7 @@ const multisend = {
     }
 
     const psbtBase64 = psbt.toBase64()
-    const signedPSBTBase64 = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbtBase64, inputsToSign] }) // TODO: all inputs CAL SUPPORT
+    const signedPSBTBase64 = await window.bitcoin.request({ method: 'wallet_signPSBT', params: [psbtBase64, inputsToSign] })
     const signedPSBT = bjs.Psbt.fromBase64(signedPSBTBase64, { network })
     signedPSBT.finalizeAllInputs()
 
@@ -263,6 +318,6 @@ const timelock = {
   }
 }
 
-const scripts = { timelock, multisig, multisend }
+const scripts = { timelock, multisig, multisend, opreturn }
 
 export { scripts, SCRIPT_TYPES, decodeScript }
