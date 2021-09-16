@@ -2,7 +2,7 @@ import BN from 'bignumber.js'
 
 async function sendTransaction (address, amount) {
   await window.bitcoin.enable()
-  return window.bitcoin.request({ method: 'wallet_sendTransaction', params: [address, BN(amount).times(1e8).toNumber()] })
+  return window.bitcoin.request({ method: 'wallet_sendTransaction', params: [{ to: address, value: BN(amount).times(1e8).toNumber() }] })
 }
 
 async function signMessage (message, address) {
@@ -15,14 +15,14 @@ async function tryGetAddresses (index = 0, num = 200, change = false) {
     const addresses = await getAddresses(index, num, change)
     return addresses
   } catch (e) {
+    console.error(e)
     return []
   }
 }
 
 async function getAddresses (index = 0, num = 200, change = false) {
   const addresses = await window.bitcoin.request({ method: 'wallet_getAddresses', params: [index, num, change] })
-  // TODO: put conversion to hex back in the CAL
-  return addresses.map(addr => ({ ...addr, publicKey: Buffer.from(addr.publicKey.data) }))
+  return addresses.map(addr => ({ ...addr, publicKey: Buffer.from(addr.publicKey) }))
 }
 
 async function isWalletEnabled () {

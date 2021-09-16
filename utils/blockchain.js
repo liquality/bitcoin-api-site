@@ -2,7 +2,7 @@ import axios from 'axios'
 import { network } from '@/config'
 
 async function getBaseUrl () {
-  return network.name === 'testnet' ? 'https://liquality.io/testnet/electrs' : 'https://liquality.io/electrs'
+  return network.name === 'testnet' ? 'https://blockstream.info/testnet/api' : 'https://blockstream.info/api'
 }
 
 async function getFees () {
