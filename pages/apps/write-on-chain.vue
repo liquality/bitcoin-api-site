@@ -4,11 +4,12 @@
     <form @submit.prevent="write">
       <div class="form-group">
         <label for="message">Message</label>
-        <input type="text"
-          class="form-control" name="message" id="message" v-model="message" aria-describedby="messageHelp" placeholder="Enter the message you would like to write on chain" :disabled="working">
-        <small class="form-text text-muted" v-if="messageSize !== 0 && !canWrite">Message size should be less than 80 bytes</small>
+        <textarea class="form-control" name="message" id="message" v-model="message" placeholder="Enter the message you would like to write on chain" :disabled="working" aria-describedby="messageHelp" cols="80">
+        </textarea>
+        <small class="form-text text-muted" v-if="!messageValid">Maximum 80 characters per line</small>
+        <small class="form-text text-muted" v-if="working">Sending...</small>
       </div>
-      <button class="btn btn-primary" type="submit" :disabled="working || !canWrite">Write</button>
+      <button class="btn btn-primary" type="submit" :disabled="working || !messageValid">Send</button>
     </form>
     <div v-if="tx" class="mt-3">
       <small class="text-muted">Transaction</small>
@@ -34,8 +35,10 @@ export default {
       if (!this.message) return 0
       return Buffer.from(this.message, 'utf8').length
     },
-    canWrite () {
-      return this.messageSize <= 80 && this.messageSize > 0
+    messageValid () {
+      if (!this.message || !this.message.length) return false
+      if (this.message.split('\n').find(line => Buffer.from(line, 'utf8').length > 80)) return false
+      return true
     }
   },
   methods: {
@@ -45,7 +48,7 @@ export default {
       await navigator.clipboard.writeText(text)
     },
     async write () {
-      if (!this.canWrite) return
+      if (!this.messageValid) return
 
       this.working = true
       this.tx = await scripts.opreturn.send(this.message)
@@ -54,3 +57,9 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+#message {
+  font-family: monospace !important;
+}
+</style>

@@ -22,14 +22,17 @@ function decodeScript (script) {
 
 const opreturn = {
   async send (message) {
-    const data = Buffer.from(message, 'utf8')
-    const embed = bjs.payments.embed({ data: [data] })
-
-    const targets = [{
-      script: embed.output,
-      value: 0,
-      external: true
-    }]
+    const targets = []
+    const lines = message.split('\n')
+    for (const line of lines) {
+      const data = Buffer.from(line, 'utf8')
+      const embed = bjs.payments.embed({ data: [data] })
+      targets.push({
+        script: embed.output,
+        value: 0,
+        external: true
+      })
+    }
 
     const { inputs, outputs } = await getInputs(targets)
 
